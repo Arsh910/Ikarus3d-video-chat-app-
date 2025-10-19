@@ -33,7 +33,6 @@ export default function LocalVideoTile(props) {
       {/* Video Element */}
       <video
         ref={localVideoRef}
-        id="localVideo" 
         autoPlay
         playsInline
         muted
