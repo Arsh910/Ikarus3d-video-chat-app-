@@ -10,7 +10,7 @@ export default function Lobby() {
 
   useEffect(() => {
     toast.info(
-      "⚠️ The first meeting may take ~50 seconds to load as the server wakes up (Render free tier).",
+      "⚠️ The first meeting may take up to ~50 seconds to start as the server wakes up (Render free tier). Please start the meeting and wait — once Chrome asks for camera and microphone permissions, the server is ready.",
       {
         position: "bottom-center",
         autoClose: 7000,
