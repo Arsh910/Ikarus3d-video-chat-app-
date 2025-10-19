@@ -1,21 +1,29 @@
-import { Link, useLocation } from "react-router-dom";
+// Sidebar.jsx
+import { useLocation, useNavigate } from "react-router-dom";
 import useTheme from "./context/themeContext";
 
 export default function Sidebar() {
   const { thememode, changeMode } = useTheme();
   const location = useLocation();
+  const navigate = useNavigate(); // <-- important
 
   const isMeetingRoute = location.pathname.startsWith("/meeting");
   const bottomSafePadding = isMeetingRoute ? "calc(80px + 1rem)" : undefined;
 
   const navItems = [{ name: "Lobby", path: "/", icon: LobbyIcon }];
 
+  // dispatch event then navigate
   const handleLobbyClick = (evt) => {
-    const ev = new CustomEvent("before-leave-meeting", { detail: { from: "sidebar" } });
-    window.dispatchEvent(ev);
+    // Prevent double navigation if called from a Link/button
+    evt?.preventDefault?.();
+
+    // dispatch synchronously so listeners (SimpleMeeting) can run stopAll()
+    window.dispatchEvent(new CustomEvent("before-leave-meeting", { detail: { from: "sidebar" } }));
+
+    // small micro-delay is unnecessary but harmless; navigate immediately
     navigate("/");
   };
-  
+
   return (
     <aside
       className="flex flex-col justify-between shrink-0
@@ -24,7 +32,12 @@ export default function Sidebar() {
       style={{ paddingBottom: bottomSafePadding }}
     >
       <div className="flex items-center">
-        <Link to="/" className="flex items-center gap-3">
+        {/* Use a button here so we control timing exactly */}
+        <button
+          onClick={handleLobbyClick}
+          className="flex items-center gap-3 bg-transparent border-none cursor-pointer"
+          aria-label="Go to Lobby"
+        >
           <div
             className="w-10 h-10 rounded-lg flex items-center justify-center text-lg font-bold"
             style={{ background: "#6366F1", color: "white" }}
@@ -32,7 +45,7 @@ export default function Sidebar() {
             IK
           </div>
 
-          <div className="hidden sm:block">
+          <div className="hidden sm:block text-left">
             <div className="text-lg font-semibold text-gray-900 dark:text-white">
               Ikarus
             </div>
@@ -40,16 +53,17 @@ export default function Sidebar() {
               Video Call
             </div>
           </div>
-        </Link>
+        </button>
       </div>
 
       <nav className="mt-6 flex-1">
         <ul className="space-y-1">
           {navItems.map(({ name, path, icon: Icon }) => (
             <li key={name}>
-              <Link
-                to={path}
-                className={`flex items-center gap-3 p-2 rounded-md text-sm transition-colors ${
+              {/* Controlled button nav item so we guarantee event runs first */}
+              <button
+                onClick={handleLobbyClick}
+                className={`w-full text-left flex items-center gap-3 p-2 rounded-md text-sm transition-colors ${
                   location.pathname === path
                     ? "bg-gray-200 dark:bg-[#1A1F2E] text-[#6366F1]"
                     : "text-gray-700 dark:text-[#c9d1d9] hover:bg-gray-100 dark:hover:bg-[#1A1F2E]"
@@ -57,7 +71,7 @@ export default function Sidebar() {
               >
                 <Icon />
                 <span className="hidden sm:inline">{name}</span>
-              </Link>
+              </button>
             </li>
           ))}
         </ul>
@@ -88,15 +102,7 @@ export default function Sidebar() {
 
 function LobbyIcon() {
   return (
-    <svg
-      width="18"
-      height="18"
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="2"
-      className="flex-shrink-0"
-    >
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="flex-shrink-0">
       <path d="M21 10L12 3 3 10v8a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2z"></path>
       <path d="M7 21v-6a5 5 0 0 1 10 0v6"></path>
     </svg>
