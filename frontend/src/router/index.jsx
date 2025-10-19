@@ -25,7 +25,7 @@ export default function Router() {
         { path: "lobby", element: <Lobby /> },
         { path: "meeting/:meetingId", element: <MeetingRoom /> },
         { path: "404", element: <Page404 /> },
-        { path: "*", element: <Navigate to="/404" replace /> },
+        { path: "*", element: <Navigate to="/lobby" replace /> },
       ],
     },
   ]);
