@@ -21,8 +21,7 @@ export default function Router() {
       path: "/",
       element: <Layout />,
       children: [
-        { index: true, element: <Navigate to="/lobby" replace /> },
-        { path: "lobby", element: <Lobby /> },
+        { path: "/", element: <Lobby /> },
         { path: "meeting/:meetingId", element: <MeetingRoom /> },
         { path: "404", element: <Page404 /> },
         { path: "*", element: <Navigate to="/404" replace /> },
