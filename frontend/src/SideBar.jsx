@@ -12,6 +12,25 @@ export default function Sidebar() {
     { name: "Lobby", path: "/", icon: LobbyIcon },
   ];
 
+  const stopAllMediaTracks = () => {
+    // Stop all local media tracks
+    if (navigator.mediaDevices) {
+      navigator.mediaDevices
+        .enumerateDevices()
+        .then((devices) => {
+          const videoEls = document.querySelectorAll("video");
+          videoEls.forEach((video) => {
+            const stream = video.srcObject;
+            if (stream) {
+              stream.getTracks().forEach((track) => track.stop());
+              video.srcObject = null;
+            }
+          });
+        })
+        .catch((err) => console.warn("Error stopping media tracks:", err));
+    }
+  };
+
   return (
     <aside
       className="flex flex-col justify-between shrink-0
