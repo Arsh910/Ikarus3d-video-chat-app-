@@ -468,6 +468,24 @@ export default function SimpleMeeting() {
   }, [spotlightId, spotlightParticipant, mySocketId]);
 
 
+  useEffect(() => {
+    function onBeforeLeave(e) {
+      try {
+        stopAll();
+      } catch (err) {
+        console.warn("Error in stopAll during before-leave-meeting:", err);
+      }
+    }
+  
+    window.addEventListener("before-leave-meeting", onBeforeLeave);
+  
+    return () => {
+      window.removeEventListener("before-leave-meeting", onBeforeLeave);
+    };
+  }, [stopAll]);
+
+
+  
   return (
     <div
       className="relative flex h-screen w-full flex-col overflow-hidden bg-white font-sans text-gray-900 dark:bg-[#0F1419] dark:text-white"
