@@ -1,4 +1,3 @@
-// Sidebar.jsx
 import { Link, useLocation } from "react-router-dom";
 import useTheme from "./context/themeContext";
 
@@ -9,37 +8,7 @@ export default function Sidebar() {
   const isMeetingRoute = location.pathname.startsWith("/meeting");
   const bottomSafePadding = isMeetingRoute ? "calc(80px + 1rem)" : undefined;
 
-  const navItems = [
-    { name: "Lobby", path: "/", icon: LobbyIcon },
-  ];
-
-  // Stop only the local user's media (the video element with id="localVideo")
-  const stopLocalMediaTracks = () => {
-    try {
-      const localVideoEl = document.getElementById("localVideo");
-      if (!localVideoEl) return;
-
-      const stream = localVideoEl.srcObject;
-      if (stream && stream.getTracks) {
-        stream.getTracks().forEach((track) => {
-          try {
-            track.stop();
-          } catch (e) {
-            console.warn("Error stopping track", e);
-          }
-        });
-      }
-
-      // Clear srcObject so browser releases it
-      try {
-        localVideoEl.srcObject = null;
-      } catch (e) {
-        // ignore
-      }
-    } catch (err) {
-      console.warn("stopLocalMediaTracks failed:", err);
-    }
-  };
+  const navItems = [{ name: "Lobby", path: "/", icon: LobbyIcon }];
 
   return (
     <aside
@@ -49,19 +18,14 @@ export default function Sidebar() {
       style={{ paddingBottom: bottomSafePadding }}
     >
       <div className="flex items-center">
-        <Link
-          to="/"
-          className="flex items-center gap-3"
-          onClick={() => {
-            stopLocalMediaTracks(); // stop camera/mic before navigating
-          }}
-        >
+        <Link to="/" className="flex items-center gap-3">
           <div
             className="w-10 h-10 rounded-lg flex items-center justify-center text-lg font-bold"
             style={{ background: "#6366F1", color: "white" }}
           >
             IK
           </div>
+
           <div className="hidden sm:block">
             <div className="text-lg font-semibold text-gray-900 dark:text-white">
               Ikarus
@@ -79,13 +43,11 @@ export default function Sidebar() {
             <li key={name}>
               <Link
                 to={path}
-                onClick={stopLocalMediaTracks}
-                className={`flex items-center gap-3 p-2 rounded-md text-sm transition-colors
-                  ${
-                    location.pathname === path
-                      ? "bg-gray-200 dark:bg-[#1A1F2E] text-[#6366F1]"
-                      : "text-gray-700 dark:text-[#c9d1d9] hover:bg-gray-100 dark:hover:bg-[#1A1F2E]"
-                  }`}
+                className={`flex items-center gap-3 p-2 rounded-md text-sm transition-colors ${
+                  location.pathname === path
+                    ? "bg-gray-200 dark:bg-[#1A1F2E] text-[#6366F1]"
+                    : "text-gray-700 dark:text-[#c9d1d9] hover:bg-gray-100 dark:hover:bg-[#1A1F2E]"
+                }`}
               >
                 <Icon />
                 <span className="hidden sm:inline">{name}</span>
@@ -104,16 +66,12 @@ export default function Sidebar() {
           {thememode === "dark" ? (
             <>
               <MoonIcon />
-              <span className="hidden sm:inline text-sm text-gray-100">
-                Dark
-              </span>
+              <span className="hidden sm:inline text-sm text-gray-100">Dark</span>
             </>
           ) : (
             <>
               <SunIcon />
-              <span className="hidden sm:inline text-sm text-gray-800">
-                Light
-              </span>
+              <span className="hidden sm:inline text-sm text-gray-800">Light</span>
             </>
           )}
         </button>
