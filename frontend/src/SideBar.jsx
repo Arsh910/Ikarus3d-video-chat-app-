@@ -9,8 +9,7 @@ export default function Sidebar() {
   const bottomSafePadding = isMeetingRoute ? "calc(80px + 1rem)" : undefined;
 
   const navItems = [
-    { name: "Home", path: "/", icon: HomeIcon },
-    { name: "Lobby", path: "/lobby", icon: LobbyIcon },
+    { name: "Lobby", path: "/", icon: LobbyIcon },
   ];
 
   return (
@@ -84,23 +83,6 @@ export default function Sidebar() {
         </button>
       </div>
     </aside>
-  );
-}
-
-function HomeIcon() {
-  return (
-    <svg
-      width="18"
-      height="18"
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="2"
-      className="flex-shrink-0"
-    >
-      <path d="M3 12l9-9 9 9"></path>
-      <path d="M9 21V9h6v12"></path>
-    </svg>
   );
 }
 
