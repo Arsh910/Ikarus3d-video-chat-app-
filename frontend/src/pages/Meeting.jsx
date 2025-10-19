@@ -479,7 +479,7 @@ export default function SimpleMeeting() {
       >
         <div>
           <h1 className="m-0 text-xl font-semibold">
-            Weekly Team Sync
+            Ikarus3d-project
           </h1>
           <p className="m-0 mt-1 text-sm text-gray-500 dark:text-gray-400">
             Meeting ID: {meetingId}
