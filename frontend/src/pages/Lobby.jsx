@@ -1,10 +1,23 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { v4 as uuidv4 } from "uuid";
+import toast, { Toaster } from "react-hot-toast";
 
 export default function Lobby() {
   const [joinId, setJoinId] = useState("");
   const navigate = useNavigate();
+
+  useEffect(() => {
+    toast("⚠️ The first meeting may take ~50 seconds to load as the server wakes up (Render free tier).", {
+      duration: 7000,
+      position: "bottom-center",
+      style: {
+        background: "#333",
+        color: "#fff",
+        fontSize: "0.9rem",
+      },
+    });
+  }, []);
 
   const createMeeting = () => {
     const id = uuidv4();
@@ -21,6 +34,9 @@ export default function Lobby() {
       className="min-h-screen flex flex-col items-center justify-center px-4 transition-colors duration-300
                  bg-white text-gray-900 dark:bg-[#0d1117] dark:text-[#c9d1d9]"
     >
+      {/* Toast container */}
+      <Toaster />
+
       <div className="w-full max-w-md p-8 rounded-2xl shadow-md bg-gray-100 dark:bg-[#161b22] text-center transition-colors duration-300">
         <h1 className="text-2xl font-bold mb-6">Ikarus3d Video Call Project</h1>
 
