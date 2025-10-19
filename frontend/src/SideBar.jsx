@@ -10,6 +10,12 @@ export default function Sidebar() {
 
   const navItems = [{ name: "Lobby", path: "/", icon: LobbyIcon }];
 
+  const handleLobbyClick = (evt) => {
+    const ev = new CustomEvent("before-leave-meeting", { detail: { from: "sidebar" } });
+    window.dispatchEvent(ev);
+    navigate("/");
+  };
+  
   return (
     <aside
       className="flex flex-col justify-between shrink-0
