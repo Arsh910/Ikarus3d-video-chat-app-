@@ -12,15 +12,11 @@ export default function Sidebar() {
     { name: "Lobby", path: "/", icon: LobbyIcon },
   ];
 
-  // 🧹 Function to stop all active media (camera + mic)
   const stopAllMediaTracks = () => {
-    // Stop all local media tracks
     if (navigator.mediaDevices) {
       navigator.mediaDevices
         .enumerateDevices()
         .then((devices) => {
-          // Try to stop any active streams
-          // We can’t access raw streams here, but we can loop over all elements using media
           const videoEls = document.querySelectorAll("video");
           videoEls.forEach((video) => {
             const stream = video.srcObject;
@@ -46,7 +42,7 @@ export default function Sidebar() {
           to="/"
           className="flex items-center gap-3"
           onClick={() => {
-            stopAllMediaTracks(); // 🧹 stop camera/mic before navigating
+            stopAllMediaTracks();
           }}
         >
           <div
