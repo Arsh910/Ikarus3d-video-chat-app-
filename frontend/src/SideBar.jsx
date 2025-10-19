@@ -1,3 +1,4 @@
+// Sidebar.jsx
 import { Link, useLocation } from "react-router-dom";
 import useTheme from "./context/themeContext";
 
@@ -12,21 +13,31 @@ export default function Sidebar() {
     { name: "Lobby", path: "/", icon: LobbyIcon },
   ];
 
-  const stopAllMediaTracks = () => {
-    if (navigator.mediaDevices) {
-      navigator.mediaDevices
-        .enumerateDevices()
-        .then((devices) => {
-          const videoEls = document.querySelectorAll("video");
-          videoEls.forEach((video) => {
-            const stream = video.srcObject;
-            if (stream) {
-              stream.getTracks().forEach((track) => track.stop());
-              video.srcObject = null;
-            }
-          });
-        })
-        .catch((err) => console.warn("Error stopping media tracks:", err));
+  // Stop only the local user's media (the video element with id="localVideo")
+  const stopLocalMediaTracks = () => {
+    try {
+      const localVideoEl = document.getElementById("localVideo");
+      if (!localVideoEl) return;
+
+      const stream = localVideoEl.srcObject;
+      if (stream && stream.getTracks) {
+        stream.getTracks().forEach((track) => {
+          try {
+            track.stop();
+          } catch (e) {
+            console.warn("Error stopping track", e);
+          }
+        });
+      }
+
+      // Clear srcObject so browser releases it
+      try {
+        localVideoEl.srcObject = null;
+      } catch (e) {
+        // ignore
+      }
+    } catch (err) {
+      console.warn("stopLocalMediaTracks failed:", err);
     }
   };
 
@@ -42,7 +53,7 @@ export default function Sidebar() {
           to="/"
           className="flex items-center gap-3"
           onClick={() => {
-            stopAllMediaTracks();
+            stopLocalMediaTracks(); // stop camera/mic before navigating
           }}
         >
           <div
@@ -68,7 +79,7 @@ export default function Sidebar() {
             <li key={name}>
               <Link
                 to={path}
-                onClick={stopAllMediaTracks}
+                onClick={stopLocalMediaTracks}
                 className={`flex items-center gap-3 p-2 rounded-md text-sm transition-colors
                   ${
                     location.pathname === path
