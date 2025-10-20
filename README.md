@@ -39,15 +39,15 @@ Follow these steps to set up the project:
    ```
 
 6. **Database Setup**  
-   - Make migrations:  
-     ```bash
-     python manage.py makemigrations
-     ```  
-   - Apply migrations:  
-     ```bash
-     python manage.py migrate
-     ```
-     
+   Make migrations:  
+   ```bash
+   python manage.py makemigrations
+   ```  
+   Apply migrations:  
+   ```bash
+   python manage.py migrate
+   ```
+
 7. **Run the Django Server**  
    ```bash
    python manage.py runserver
@@ -79,14 +79,6 @@ Follow these steps to set up the project:
    Make sure it is running on:  
    [http://127.0.0.1:5173/](http://127.0.0.1:573/)
 
-### 5. Change the URL
-Navigate to:
-frontend/src/config/constants.js
-
-Update the following line:
-```javascript
-SIGNALING_URL = "http://127.0.0.1:8000/ws/video_chat";  
-```
 
 ## Final Notes
 
