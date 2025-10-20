@@ -39,14 +39,14 @@ Follow these steps to set up the project:
    ```
 
 6. **Database Setup**  
-   - Make migrations:  
-     ```bash
-     python manage.py makemigrations
-     ```  
-   - Apply migrations:  
-     ```bash
-     python manage.py migrate
-     ```
+   Make migrations:  
+   ```bash
+   python manage.py makemigrations
+   ```  
+   Apply migrations:  
+   ```bash
+   python manage.py migrate
+   ```
 
 7. **Run the Django Server**  
    ```bash
