@@ -17,10 +17,21 @@ function App() {
     }
   }
 
+  // saved theme
+  useEffect(() => {
+    const savedTheme = localStorage.getItem('ikarus-theme');
+    if (savedTheme === 'light' || savedTheme === 'dark') {
+      changemode(savedTheme);
+    }
+  }, []);
+
+  // change theme
   useEffect(()=>{
     let cl = document.querySelector('html').classList;
     cl.remove('light' , 'dark');
     cl.add(thememode);
+
+    localStorage.setItem('ikarus-theme', thememode);
   },[thememode])
 
 

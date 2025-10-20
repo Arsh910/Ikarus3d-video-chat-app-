@@ -10,7 +10,7 @@ export default function Lobby() {
 
   useEffect(() => {
     toast.info(
-      "⚠️ The first meeting may take up to ~50 seconds to start as the server wakes up (Render free tier). Please start the meeting and wait — once Chrome asks for camera and microphone permissions, the server is ready.",
+      "The first meeting may take up to ~50 seconds to start as the server wakes up (Render free tier). Please start the meeting and wait — once Chrome asks for camera and microphone permissions, the server is ready.",
       {
         position: "bottom-center",
         autoClose: 7000,
@@ -19,6 +19,11 @@ export default function Lobby() {
         pauseOnHover: true,
         draggable: true,
         theme: "dark",
+        style: {
+        width: "600px",
+        maxWidth: "90%",       
+        whiteSpace: "pre-wrap"
+      }
       }
     );
   }, []);

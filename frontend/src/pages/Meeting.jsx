@@ -10,6 +10,7 @@ import LocalVideoTile from "../components/LocalVideoTile";
 import RemoteVideoTile from "../components/RemoteVideoTile";
 import { toast, ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
+import Header from "../components/Header";
 
 const DEFAULT_PARTICIPANT_PERMS = { allowed: true, unmute: true, video: true };
 const DEFAULT_PENDING_PERMS = { allowed: false, unmute: false, video: false };
@@ -33,6 +34,9 @@ export default function SimpleMeeting() {
   const [messages, setMessages] = useState([]);
   const [messageInput, setMessageInput] = useState("");
   const [spotlightId, setSpotlightId] = useState(null);
+
+  const [chatNotificationsCount, setChatNotificationsCount] = useState(0);
+
 
   const {
     localStreamRef,
@@ -360,6 +364,7 @@ export default function SimpleMeeting() {
           }
 
           setMessages(prev => [...prev, { fromName: data.fromName || "User", text: data.text }]);
+          setChatNotificationsCount(prev => prev + 1);
           break;
 
         case "you-were-kicked":
@@ -492,26 +497,7 @@ export default function SimpleMeeting() {
     >
       <ToastContainer />
       {/* Header */}
-      <header
-        className="fixed top-0 left-0 right-0 z-50 flex h-[60px] items-center justify-between border-b border-gray-200 bg-white px-6 dark:border-[#252B3A] dark:bg-[#0F1419]"
-      >
-        <div>
-          <h1 className="m-0 text-xl font-semibold">
-            Ikarus3d-project
-          </h1>
-          <p className="m-0 mt-1 text-sm text-gray-500 dark:text-gray-400">
-            Meeting ID: {meetingId}
-          </p>
-        </div>
-        <div className="flex items-center gap-4">
-          <div className="flex items-center gap-2">
-            <div className="h-2 w-2 rounded-full bg-emerald-500" />
-            <span className="text-sm font-medium">
-              {allParticipants.length} Participants
-            </span>
-          </div>
-        </div>
-      </header>
+      <Header meetingId={meetingId} allParticipants={allParticipants}/>
 
       {/* Main Content */}
       <div
@@ -731,10 +717,18 @@ export default function SimpleMeeting() {
           onToggleCam={toggleCam}
           onToggleScreenShare={handleToggleScreenShare}
           onLeave={handleLeave}
-          onToggleChat={() => togglePanel("chat")}
+          
+          onToggleChat={() => {
+            togglePanel("chat");
+            setChatNotificationsCount(0);
+          }}
+
           onToggleParticipants={() => togglePanel("participants")}
           activePanelState={activePanelState}
           pendingRequestsCount={pendingRequests.length}
+
+          chatNotificationsCount={chatNotificationsCount}
+
         />
       </div>
 

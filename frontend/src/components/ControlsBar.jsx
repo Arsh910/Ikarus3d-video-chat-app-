@@ -1,3 +1,5 @@
+import { useEffect, useRef, useState } from "react";
+
 const icons = {
   mic: (
     <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -52,10 +54,16 @@ const icons = {
       <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
       <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
     </svg>
+  ),
+  moreVertical: (
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <circle cx="12" cy="5" r="1"></circle>
+      <circle cx="12" cy="12" r="1"></circle>
+      <circle cx="12" cy="19" r="1"></circle>
+    </svg>
   )
 };
 
-// Main component
 export default function ControlsBar({
   muted,
   camOff,
@@ -67,90 +75,238 @@ export default function ControlsBar({
   onToggleChat,
   onToggleParticipants,
   activePanelState,
-  pendingRequestsCount
+  pendingRequestsCount,
+  chatNotificationsCount = 0,
+  notificationSoundEnabled = true
 }) {
-
-  // Base style for all control buttons
   const btnBaseClass = "w-[52px] h-[52px] rounded-full flex items-center justify-center cursor-pointer transition-colors duration-200 border-none";
-
-  // Style for default (non-active) buttons
   const btnNormalClass = `${btnBaseClass} bg-gray-100 hover:bg-gray-200 text-gray-700 dark:bg-[#1A1F2E] dark:hover:bg-[#252B3A] dark:text-white`;
-
-  // Style for buttons that are "active" (e.g., sharing, panel open)
   const btnActiveClass = `${btnBaseClass} bg-indigo-500 hover:bg-indigo-600 text-white`;
-
-  // Style for "danger" state buttons (e.g., muted, cam off)
   const btnDangerClass = `${btnBaseClass} bg-red-500 hover:bg-red-600 text-white`;
 
+  const [menuOpen, setMenuOpen] = useState(false);
+  const menuRef = useRef(null);
+  const moreBtnRef = useRef(null);
+
+  const prevChatRef = useRef(null);
+  const prevPendingRef = useRef(null);
+
+  useEffect(() => {
+    function handleClick(e) {
+      if (menuOpen) {
+        if (menuRef.current && !menuRef.current.contains(e.target) && moreBtnRef.current && !moreBtnRef.current.contains(e.target)) {
+          setMenuOpen(false);
+        }
+      }
+    }
+    window.addEventListener("click", handleClick);
+    return () => window.removeEventListener("click", handleClick);
+  }, [menuOpen]);
+
+  // notification sound using Web Audio API
+  const playNotificationSound = () => {
+    try {
+      if (!notificationSoundEnabled) return;
+      const ctx = new (window.AudioContext || window.webkitAudioContext)();
+      const o = ctx.createOscillator();
+      const g = ctx.createGain();
+      o.type = "sine";
+      o.frequency.value = 880;
+      g.gain.setValueAtTime(0.0001, ctx.currentTime);
+      g.gain.exponentialRampToValueAtTime(0.05, ctx.currentTime + 0.01);
+      g.gain.exponentialRampToValueAtTime(0.0001, ctx.currentTime + 0.18);
+      o.connect(g);
+      g.connect(ctx.destination);
+      o.start();
+      o.stop(ctx.currentTime + 0.2);
+      setTimeout(() => {
+        if (ctx && ctx.state !== "closed") ctx.close().catch(() => {});
+      }, 500);
+    } catch (err) {
+    }
+  };
+
+  useEffect(() => {
+    if (prevChatRef.current === null || prevPendingRef.current === null) {
+      prevChatRef.current = chatNotificationsCount;
+      prevPendingRef.current = pendingRequestsCount;
+      return;
+    }
+
+    if (chatNotificationsCount > prevChatRef.current || pendingRequestsCount > prevPendingRef.current) {
+      playNotificationSound();
+    }
+
+    prevChatRef.current = chatNotificationsCount;
+    prevPendingRef.current = pendingRequestsCount;
+  }, [chatNotificationsCount, pendingRequestsCount, notificationSoundEnabled]);
+
+  const showChatRing = chatNotificationsCount > 0;
+  const showPartRing = pendingRequestsCount > 0;
+  const showAnyRing = showChatRing || showPartRing;
+
   return (
-    <div
-      className="flex h-full w-full items-center justify-between bg-white px-6 dark:bg-[#0F1419]"
-    >
-      {/* Left Controls (Mic, Cam, Share) */}
-      <div className="flex gap-4">
-        <button
-          onClick={onToggleMute}
-          className={muted ? btnDangerClass : btnNormalClass}
-          aria-label={muted ? "Unmute" : "Mute"}
-        >
-          {muted ? icons.micOff : icons.mic}
-        </button>
-        <button
-          onClick={onToggleCam}
-          className={camOff ? btnDangerClass : btnNormalClass}
-          aria-label={camOff ? "Start video" : "Stop video"}
-        >
-          {camOff ? icons.videoOff : icons.video}
-        </button>
-        <button
-          onClick={onToggleScreenShare}
-          className={sharing ? btnActiveClass : btnNormalClass}
-          aria-label={sharing ? "Stop sharing" : "Share screen"}
-        >
-          {icons.screenShare}
-        </button>
-      </div>
+    <>
+      <style>{`
+        @keyframes cb-rotate {
+          0% { transform: rotate(0deg); }
+          100% { transform: rotate(360deg); }
+        }
+        .cb-rotating-svg {
+          animation: cb-rotate 1.1s linear infinite;
+          pointer-events: none;
+        }
+      `}</style>
 
-      {/* Center Controls (Leave) */}
-      <div>
-        <button
-          onClick={onLeave}
-          className="flex h-[52px] w-auto items-center justify-center rounded-xl border-none bg-red-500 px-6 text-white transition-colors duration-200 hover:bg-red-600"
-          aria-label="Leave meeting"
-        >
-          {icons.phoneOff}
-          <span className="ml-2">Leave</span>
-        </button>
-      </div>
-
-      {/* Right Controls (Chat, Participants) */}
-      <div className="flex gap-4">
-        <button
-          onClick={onToggleChat}
-          className={activePanelState === 'chat' ? btnActiveClass : btnNormalClass}
-          aria-label="Open chat"
-        >
-          {icons.messageSquare}
-        </button>
-
-        {/* PARTICIPANTS BUTTON WRAPPER */}
-        <div className="relative inline-block">
-          <button
-            onClick={onToggleParticipants}
-            className={activePanelState === 'participants' ? btnActiveClass : btnNormalClass}
-            aria-label="Open participants list"
-          >
-            {icons.users}
+      <div className="flex h-full w-full items-center justify-between bg-white px-6 dark:bg-[#0F1419]">
+        {/* Left Controls */}
+        <div className="flex gap-4">
+          <button onClick={onToggleMute} className={muted ? btnDangerClass : btnNormalClass} aria-label={muted ? "Unmute" : "Mute"}>
+            {muted ? icons.micOff : icons.mic}
           </button>
+          <button onClick={onToggleCam} className={camOff ? btnDangerClass : btnNormalClass} aria-label={camOff ? "Start video" : "Stop video"}>
+            {camOff ? icons.videoOff : icons.video}
+          </button>
+          <button onClick={onToggleScreenShare} className={sharing ? btnActiveClass : btnNormalClass} aria-label={sharing ? "Stop sharing" : "Share screen"}>
+            {icons.screenShare}
+          </button>
+        </div>
 
-          {/* NOTIFICATION DOT */}
-          {pendingRequestsCount > 0 && (
-            <div
-              className="absolute top-1 right-1 h-[10px] w-[10px] rounded-full border-2 border-white bg-red-500 dark:border-[#0F1419]"
-            />
-          )}
+        {/* Center Leave button (circular) */}
+        <div>
+          <button
+            onClick={onLeave}
+            className="flex h-[52px] w-[52px] items-center justify-center rounded-full border-none bg-red-500 text-white transition-colors duration-200 hover:bg-red-600"
+            aria-label="Leave meeting"
+          >
+            {icons.phoneOff}
+          </button>
+        </div>
+
+        {/* Right Controls (desktop / tablet) */}
+        <div className="hidden sm:flex gap-4 items-center">
+          {/* Chat - relative wrapper so ring can sit around the whole button */}
+          <div className="relative inline-flex items-center justify-center">
+            <button
+              onClick={onToggleChat}
+              className={activePanelState === "chat" ? btnActiveClass : btnNormalClass}
+              aria-label="Open chat"
+            >
+              {icons.messageSquare}
+            </button>
+
+            {/* red rotating ring for chat notifications */}
+            {showChatRing && (
+              <svg
+                className="cb-rotating-svg absolute -left-1 -top-1 w-[60px] h-[60px]"
+                viewBox="0 0 60 60"
+                fill="none"
+                xmlns="http://www.w3.org/2000/svg"
+                aria-hidden="true"
+              >
+                {/* Solid red stroke ring */}
+                <circle cx="30" cy="30" r="26" stroke="#ef4444" strokeWidth="3" strokeLinecap="round"
+                  strokeDasharray="120" strokeDashoffset="60" fill="none" />
+              </svg>
+            )}
+          </div>
+
+          {/* Participants */}
+          <div className="relative inline-flex items-center justify-center">
+            <button
+              onClick={onToggleParticipants}
+              className={activePanelState === "participants" ? btnActiveClass : btnNormalClass}
+              aria-label="Open participants list"
+            >
+              {icons.users}
+            </button>
+
+            {/* red rotating ring for participant requests */}
+            {showPartRing && (
+              <svg
+                className="cb-rotating-svg absolute -left-1 -top-1 w-[60px] h-[60px]"
+                viewBox="0 0 60 60"
+                fill="none"
+                xmlns="http://www.w3.org/2000/svg"
+                aria-hidden="true"
+              >
+                <circle cx="30" cy="30" r="26" stroke="#ef4444" strokeWidth="3" strokeLinecap="round"
+                  strokeDasharray="120" strokeDashoffset="60" fill="none" />
+              </svg>
+            )}
+          </div>
+        </div>
+
+        {/* Small screen: more button */}
+        <div className="flex sm:hidden items-center">
+          <div className="relative inline-block">
+            <button
+              ref={moreBtnRef}
+              onClick={() => setMenuOpen((s) => !s)}
+              className={menuOpen ? btnActiveClass : btnNormalClass}
+              aria-label="More controls"
+              title="More"
+            >
+              {icons.moreVertical}
+            </button>
+
+            {/* show a red rotating ring around more button if any notifications exist */}
+            {showAnyRing && (
+              <svg
+                className="cb-rotating-svg absolute -left-1 -top-1 w-[60px] h-[60px]"
+                viewBox="0 0 60 60"
+                fill="none"
+                xmlns="http://www.w3.org/2000/svg"
+                aria-hidden="true"
+              >
+                <circle cx="30" cy="30" r="26" stroke="#ef4444" strokeWidth="3" strokeLinecap="round"
+                  strokeDasharray="120" strokeDashoffset="60" fill="none" />
+              </svg>
+            )}
+
+            {/* Overflow menu */}
+            {menuOpen && (
+              <div
+                ref={menuRef}
+                className="absolute right-0 mt-2 w-44 rounded-md shadow-lg bg-white dark:bg-[#0F1419] ring-1 ring-black ring-opacity-5 z-50"
+              >
+                <div className="py-1">
+                  <button
+                    onClick={() => {
+                      setMenuOpen(false);
+                      onToggleChat();
+                    }}
+                    className={`w-full text-left px-4 py-2 text-sm flex items-center gap-3 ${activePanelState === "chat" ? "bg-indigo-50 dark:bg-[#13203a]" : "hover:bg-gray-50 dark:hover:bg-[#111521]"}`}
+                    aria-label="Open chat"
+                  >
+                    <span className="w-6 h-6 flex items-center justify-center">{icons.messageSquare}</span>
+                    <span className="flex-1">Chat</span>
+                    {chatNotificationsCount > 0 && (
+                      <span className="inline-flex items-center justify-center min-w-[20px] h-[20px] rounded-full bg-red-500 text-white text-xs px-1">{chatNotificationsCount}</span>
+                    )}
+                  </button>
+
+                  <button
+                    onClick={() => {
+                      setMenuOpen(false);
+                      onToggleParticipants();
+                    }}
+                    className={`w-full text-left px-4 py-2 text-sm flex items-center gap-3 ${activePanelState === "participants" ? "bg-indigo-50 dark:bg-[#13203a]" : "hover:bg-gray-50 dark:hover:bg-[#111521]"}`}
+                    aria-label="Open participants"
+                  >
+                    <span className="w-6 h-6 flex items-center justify-center">{icons.users}</span>
+                    <span className="flex-1">Participants</span>
+                    {pendingRequestsCount > 0 && (
+                      <span className="inline-flex items-center justify-center min-w-[20px] h-[20px] rounded-full bg-red-500 text-white text-xs px-1">{pendingRequestsCount}</span>
+                    )}
+                  </button>
+                </div>
+              </div>
+            )}
+          </div>
         </div>
       </div>
-    </div>
+    </>
   );
 }
+

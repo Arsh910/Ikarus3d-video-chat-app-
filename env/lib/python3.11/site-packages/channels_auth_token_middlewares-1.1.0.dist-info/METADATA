@@ -1,0 +1,68 @@
+Metadata-Version: 2.1
+Name: channels-auth-token-middlewares
+Version: 1.1.0
+Summary: Django Channels auth token middlewares
+Home-page: https://github.com/YegorDB/django-channels-auth-token-middlewares
+Author: Yegor Bitensky
+Keywords: django channels middleware
+Classifier: Development Status :: 5 - Production/Stable
+Classifier: Intended Audience :: Developers
+Classifier: Topic :: Software Development
+Classifier: License :: OSI Approved :: Apache Software License
+Classifier: Programming Language :: Python
+Classifier: Programming Language :: Python :: 3
+Classifier: Programming Language :: Python :: 3.6
+Classifier: Programming Language :: Python :: 3.7
+Classifier: Programming Language :: Python :: 3.8
+Classifier: Programming Language :: Python :: 3.9
+Classifier: Programming Language :: Python :: 3.10
+Classifier: Programming Language :: Python :: 3.11
+Classifier: Programming Language :: Python :: 3 :: Only
+Requires-Python: >=3.6
+Description-Content-Type: text/markdown
+License-File: LICENSE
+Requires-Dist: channels (>=3)
+
+# Django Channels auth token middlewares
+
+> Provides Django REST framework [token authentication](https://www.django-rest-framework.org/api-guide/authentication/#tokenauthentication) middleware, [Simple JWT](https://django-rest-framework-simplejwt.readthedocs.io/en/latest/index.html) middleware and easily extendable middlewares to work with auth tokens placed in request headers, cookie and query string.
+
+
+## Requirements
+- Python>=3.6
+- Channels>=3
+
+
+## Install
+1. `$ pip install channels-auth-token-middlewares`
+2. Add app name to `INSTALLED_APPS`
+```python
+INSTALLED_APPS = [
+    # base django apps (django.contrib.auth is required)
+    # other apps this one depends on (like rest_framework if it's necessary)
+    'channels_auth_token_middlewares',
+    # custom apps
+]
+```
+
+## Tutorial
+[Explore](tutorial)
+
+
+## Docs
+[Explore](docs)
+
+
+## Tests
+
+### Requirements
+- Docker>=19
+- docker-compose>=1.25
+
+### Usage
+
+#### Run
+`$ docker-compose -f docker-compose.tests.yml up`
+
+#### Clean
+`$ docker-compose -f docker-compose.tests.yml down`
