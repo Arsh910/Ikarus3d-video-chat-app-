@@ -79,10 +79,16 @@ Follow these steps to set up the project:
    Make sure it is running on:  
    [http://127.0.0.1:5173/](http://127.0.0.1:573/)
 
-5. **Change the Url**
-   Go into frontend/src/config/constants.js
-   update SIGNALING_URL = http://127.0.0.1:8000/ws/video_chat
-  
+### 5. Change the URL
+
+Navigate to:
+
+frontend/src/config/constants.js
+
+Update the following line:
+
+```javascript
+SIGNALING_URL = "http://127.0.0.1:8000/ws/video_chat";  
 ---
 
 ## Final Notes
