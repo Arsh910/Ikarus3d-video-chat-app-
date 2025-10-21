@@ -19,7 +19,11 @@ export default function SimpleMeeting() {
   const { meetingId } = useParams();
   const navigate = useNavigate();
 
+  // pcsRef will store RTCPeerConnection objects keyed by remote socketId
   const pcsRef = useRef({});
+  // buffer for ICE candidates that arrive before pc or before remoteDescription
+  const pendingCandidatesRef = useRef({});
+
   const myNameRef = useRef("User-" + Math.floor(Math.random() * 1000));
   const localVideoRef = useRef();
 
@@ -36,7 +40,6 @@ export default function SimpleMeeting() {
   const [spotlightId, setSpotlightId] = useState(null);
 
   const [chatNotificationsCount, setChatNotificationsCount] = useState(0);
-
 
   const {
     localStreamRef,
@@ -64,18 +67,48 @@ export default function SimpleMeeting() {
     }
   }, []);
 
+  // Deterministic initiator rule (lexicographic) to avoid glare
+  const shouldInitiate = useCallback((localId, remoteId) => {
+    if (!localId || !remoteId) return false;
+    // choose one deterministic ordering; change this if you prefer opposite rule
+    return String(localId) > String(remoteId);
+  }, []);
+
+  // createPeer: creates (or returns existing) RTCPeerConnection using your util.
+  // also ensures any buffered ICE candidates for this peer are flushed to the pc.
   const createPeer = useCallback((peerId) => {
     if (pcsRef.current[peerId]) return pcsRef.current[peerId];
     const pc = createPeerConnection(peerId, localStreamRef, sendRaw, setRemoteStreams);
+
+    // store and expose
     pcsRef.current[peerId] = pc;
+
+    // flush any candidates buffered earlier
+    const pending = pendingCandidatesRef.current[peerId];
+    if (pending && pending.length > 0) {
+      // apply them asynchronously to avoid race with setRemoteDescription
+      setTimeout(async () => {
+        for (const c of pendingCandidatesRef.current[peerId] || []) {
+          try {
+            await pc.addIceCandidate(new RTCIceCandidate(c));
+          } catch (e) {
+            console.warn("Error applying buffered candidate for", peerId, e);
+          }
+        }
+        delete pendingCandidatesRef.current[peerId];
+      }, 0);
+    }
+
     return pc;
   }, [localStreamRef, sendRaw]);
 
+  // createPeerAndOffer: ensures local media and tracks are added, then creates an offer.
   const createPeerAndOffer = useCallback(async (peerId) => {
     try {
       await startLocalMedia(true, permissions, isOwner, pcsRef);
       const pc = createPeer(peerId);
 
+      // Add local tracks if not already added
       const stream = localStreamRef.current;
       if (stream) {
         const senders = pc.getSenders();
@@ -90,6 +123,7 @@ export default function SimpleMeeting() {
         }
       }
 
+      // create & send offer
       const offer = await pc.createOffer();
       await pc.setLocalDescription(offer);
       sendRaw({ typeof: "offer", to: peerId, offer: { type: offer.type, sdp: offer.sdp } });
@@ -105,6 +139,7 @@ export default function SimpleMeeting() {
       try { pcsRef.current[id].close(); } catch (e) {}
     });
     pcsRef.current = {};
+    pendingCandidatesRef.current = {};
     setRemoteStreams({});
   }, [stopLocalMedia, stopScreenTrack]);
 
@@ -242,33 +277,42 @@ export default function SimpleMeeting() {
           break;
 
         case "join-denied":
-          const reason = (data.reason || data.message || "The host denied your request to join." ) + " You will be redirected back to lobby";
-          try { stopAll(); } catch (e) {}
-          setJoinPending(false);
+          {
+            const reason = (data.reason || data.message || "The host denied your request to join." ) + " You will be redirected back to lobby";
+            try { stopAll(); } catch (e) {}
+            setJoinPending(false);
 
-          toast.warn(reason, {
-            position: "top-center",
-            autoClose: 3000,
-            theme: "dark",
-          });
+            toast.warn(reason, {
+              position: "top-center",
+              autoClose: 3000,
+              theme: "dark",
+            });
 
-          setTimeout(() => {
-            try { navigate("/"); } catch (e) {}
-          }, 3500);
+            setTimeout(() => {
+              try { navigate("/"); } catch (e) {}
+            }, 3500);
+          }
           break;
 
         case "join-request":
-          console.log("Host received join-request:", data);
-          setPendingRequests(prev => {
-            if (prev.find(req => req.socketId === data.socketId)) return prev;
-            return [...prev, { socketId: data.socketId, name: data.name || "User", is_owner: data.is_owner, permissions: { ...DEFAULT_PENDING_PERMS } }];
-          });
+          // FIX: only the host should receive the rotating notification and see pending requests
+          // If current client is owner, add to pendingRequests and show the toast.
+          if (isOwner) {
+            console.log("Host received join-request:", data);
+            setPendingRequests(prev => {
+              if (prev.find(req => req.socketId === data.socketId)) return prev;
+              return [...prev, { socketId: data.socketId, name: data.name || "User", is_owner: data.is_owner, permissions: { ...DEFAULT_PENDING_PERMS } }];
+            });
 
-          toast.info(`${data.name || "User"} wants to join. Check the Participants list.`, {
-            position: "top-center",
-            autoClose: 3000,
-            theme: "dark",
-          });
+            toast.info(`${data.name || "User"} wants to join. Check the Participants list.`, {
+              position: "top-center",
+              autoClose: 3000,
+              theme: "dark",
+            });
+          } else {
+            // Non-host clients ignore join requests (server will route to host)
+            console.debug("join-request ignored (not host)");
+          }
           break;
 
         case "existing-participants":
@@ -283,11 +327,19 @@ export default function SimpleMeeting() {
               setSpotlightId(mySocketId);
             }
 
+            // Ensure we have local media, then create offers deterministically
             await startLocalMedia(true, permissions, isOwner, pcsRef);
             for (const p of participantsWithPerms) {
               if (p?.socketId && p.socketId !== mySocketId) {
-                await new Promise(resolve => setTimeout(resolve, 200));
-                await createPeerAndOffer(p.socketId);
+                // deterministic initiator
+                if (shouldInitiate(mySocketId, p.socketId)) {
+                  // small stagger to reduce implicit glare
+                  await new Promise(resolve => setTimeout(resolve, 200));
+                  await createPeerAndOffer(p.socketId);
+                } else {
+                  // ensure pc exists so incoming offers/ice can be applied
+                  createPeer(p.socketId);
+                }
               }
             }
           }
@@ -308,8 +360,22 @@ export default function SimpleMeeting() {
 
             setSpotlightId(data.socketId);
 
-            console.log(`[PEER] New participant ${data.socketId} joined. Preparing to receive their offer.`);
-            createPeer(data.socketId);
+            // Deterministic decision: either initiate or wait for offer
+            try {
+              if (shouldInitiate(mySocketId, data.socketId)) {
+                // small delay so remote sets up websocket listeners
+                setTimeout(() => {
+                  createPeerAndOffer(data.socketId).catch(err => {
+                    console.warn("createPeerAndOffer for new participant failed", err);
+                  });
+                }, 150);
+              } else {
+                // ensure there is a pc to accept incoming offer / candidates
+                createPeer(data.socketId);
+              }
+            } catch (e) {
+              console.warn("Error creating offer for new participant", e);
+            }
           }
           break;
 
@@ -318,12 +384,27 @@ export default function SimpleMeeting() {
             await startLocalMedia(true, permissions, isOwner, pcsRef);
             const pc = createPeer(data.from);
 
-            if (pc.signalingState !== 'stable') {
-              console.warn(`[PEER] Glare detected! Received offer from ${data.from} but state is ${pc.signalingState}. Ignoring.`);
-              return;
+            // If signalingState is not stable, still attempt to handle offer if possible.
+            if (pc.signalingState !== 'stable' && pc.signalingState !== 'have-local-offer' && pc.signalingState !== 'have-remote-offer') {
+              // allow, but warn
+              console.warn(`[PEER] Received offer from ${data.from} with signalingState=${pc.signalingState}`);
             }
 
             await pc.setRemoteDescription(new RTCSessionDescription(data.offer));
+
+            // flush buffered ICE candidates for this peer after remoteDescription set
+            const pending = pendingCandidatesRef.current[data.from];
+            if (pending && pending.length) {
+              for (const c of pending) {
+                try {
+                  await pc.addIceCandidate(new RTCIceCandidate(c));
+                } catch (e) {
+                  console.warn("Error applying buffered candidate after offer", e);
+                }
+              }
+              delete pendingCandidatesRef.current[data.from];
+            }
+
             const answer = await pc.createAnswer();
             await pc.setLocalDescription(answer);
             sendRaw({ typeof: "answer", to: data.from, answer: { type: answer.type, sdp: answer.sdp } });
@@ -333,54 +414,85 @@ export default function SimpleMeeting() {
           break;
 
         case "answer":
-          const pc = pcsRef.current[data.from];
-          if (pc && data.answer) {
-            if (pc.signalingState === 'have-local-offer') {
+          {
+            const pc = pcsRef.current[data.from];
+            if (pc && data.answer) {
               try {
                 await pc.setRemoteDescription(new RTCSessionDescription(data.answer));
               } catch (e) {
-                 console.error("Failed to set remote answer description:", e);
+                console.warn("Failed to set remote answer description:", e);
               }
-            } else {
-              console.warn(`[PEER] Received answer from ${data.from} in unexpected state: ${pc.signalingState}. Ignoring.`);
+
+              // flush any buffered candidates after answer
+              const pending = pendingCandidatesRef.current[data.from];
+              if (pending && pending.length) {
+                for (const c of pending) {
+                  try {
+                    await pc.addIceCandidate(new RTCIceCandidate(c));
+                  } catch (e) {
+                    console.warn("Error applying buffered candidate after answer", e);
+                  }
+                }
+                delete pendingCandidatesRef.current[data.from];
+              }
             }
           }
           break;
 
         case "ice_candidate":
         case "ice-candidate":
-          const peerConn = pcsRef.current[data.from];
-          if (peerConn && data.candidate && peerConn.remoteDescription) {
-            try {
-              await peerConn.addIceCandidate(new RTCIceCandidate(data.candidate));
-            } catch (e) {
-              console.warn("Failed to add ICE candidate:", e);
+          {
+            const from = data.from;
+            const candidate = data.candidate;
+            if (!from || !candidate) break;
+
+            const peerConn = pcsRef.current[from];
+            if (peerConn) {
+              try {
+                await peerConn.addIceCandidate(new RTCIceCandidate(candidate));
+              } catch (e) {
+                // sometimes addIceCandidate fails if remoteDesc still missing — buffer then
+                console.warn("addIceCandidate failed, buffering candidate", e);
+                pendingCandidatesRef.current[from] = pendingCandidatesRef.current[from] || [];
+                pendingCandidatesRef.current[from].push(candidate);
+              }
+            } else {
+              // No pc yet — buffer candidate for when pc is created
+              pendingCandidatesRef.current[from] = pendingCandidatesRef.current[from] || [];
+              pendingCandidatesRef.current[from].push(candidate);
             }
           }
           break;
 
         case "participant-left":
-          const pcLeft = pcsRef.current[data.socketId];
-          if (pcLeft) {
-            pcLeft.close();
-            delete pcsRef.current[data.socketId];
+          {
+            const pcLeft = pcsRef.current[data.socketId];
+            if (pcLeft) {
+              try { pcLeft.close(); } catch (e) {}
+              delete pcsRef.current[data.socketId];
+            }
+            // clear any pending candidates
+            if (pendingCandidatesRef.current[data.socketId]) delete pendingCandidatesRef.current[data.socketId];
+
+            setRemoteStreams(prev => {
+              const copy = { ...prev };
+              delete copy[data.socketId];
+              return copy;
+            });
+            setParticipantsList(prev => prev.filter(p => p.socketId !== data.socketId));
           }
-          setRemoteStreams(prev => {
-            const copy = { ...prev };
-            delete copy[data.socketId];
-            return copy;
-          });
-          setParticipantsList(prev => prev.filter(p => p.socketId !== data.socketId));
           break;
 
         case "chat-message":
-          const senderId = data.fromName;
-          if (myNameRef && myNameRef.current === senderId) {
-            break;
-          }
+          {
+            const senderId = data.fromName;
+            if (myNameRef && myNameRef.current === senderId) {
+              break;
+            }
 
-          setMessages(prev => [...prev, { fromName: data.fromName || "User", text: data.text }]);
-          setChatNotificationsCount(prev => prev + 1);
+            setMessages(prev => [...prev, { fromName: data.fromName || "User", text: data.text }]);
+            setChatNotificationsCount(prev => prev + 1);
+          }
           break;
 
         case "you-were-kicked":
@@ -392,7 +504,7 @@ export default function SimpleMeeting() {
 
     ws.onmessage = handleWebSocketMessage;
     ws.onclose = () => stopAll();
-  }, [isOwner, startLocalMedia, permissions, createPeer, createPeerAndOffer, sendRaw, meetingId, mySocketId, navigate, stopAll, setMuted, updateCamStateFromStream, joinPending, spotlightId]);
+  }, [isOwner, startLocalMedia, permissions, createPeer, createPeerAndOffer, sendRaw, meetingId, mySocketId, navigate, stopAll, setMuted, updateCamStateFromStream, joinPending, spotlightId, shouldInitiate]);
 
   useEffect(() => {
     return () => stopAll();
@@ -706,7 +818,7 @@ export default function SimpleMeeting() {
                     participant={p}
                     isPending={false}
                     isOwner={isOwner}
-                    onAddmit={handleAdmitParticipant}
+                    onAdmit={handleAdmitParticipant}
                     onDeny={handleDenyParticipant}
                     onGrantPermission={handleGrantPermission}
                     onKickUser={handleKickUser}
