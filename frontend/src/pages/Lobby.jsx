@@ -57,21 +57,21 @@ export default function Lobby() {
           Create Meeting
         </button>
 
-        <div className="flex items-center justify-center">
+        <div className="flex flex-wrap items-center justify-center gap-2 w-full">
           <input
             type="text"
             placeholder="Paste meeting ID"
             value={joinId}
             onChange={(e) => setJoinId(e.target.value)}
-            className="flex-1 px-3 py-2 text-sm rounded-md border border-gray-300 dark:border-[#30363d]
-                       bg-white dark:bg-[#0d1117] text-gray-900 dark:text-[#c9d1d9]
-                       placeholder-gray-500 dark:placeholder-gray-400 focus:outline-none focus:ring-2
-                       focus:ring-[#6366F1] transition-all duration-200"
+            className="flex-1 min-w-[180px] max-w-[70%] sm:max-w-[75%] px-3 py-2 text-sm rounded-md border border-gray-300 dark:border-[#30363d]
+                      bg-white dark:bg-[#0d1117] text-gray-900 dark:text-[#c9d1d9]
+                      placeholder-gray-500 dark:placeholder-gray-400 focus:outline-none focus:ring-2
+                      focus:ring-[#6366F1] transition-all duration-200"
           />
           <button
             onClick={join}
-            className="ml-2 px-4 py-2 rounded-md text-white font-semibold bg-[#238636]
-                       hover:bg-[#2ea043] transition-colors duration-200"
+            className="px-4 py-2 rounded-md text-white font-semibold bg-[#238636]
+                      hover:bg-[#2ea043] transition-colors duration-200"
           >
             Join
           </button>
