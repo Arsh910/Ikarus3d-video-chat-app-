@@ -172,7 +172,7 @@ export default function ControlsBar({
     if (menuOpen) {
       setIsAnimating(true);
     } else if (isAnimating) {
-      const timer = setTimeout(() => setIsAnimating(false), 600);
+      const timer = setTimeout(() => setIsAnimating(false), 300);
       return () => clearTimeout(timer);
     }
   }, [menuOpen, isAnimating]);
@@ -200,9 +200,10 @@ export default function ControlsBar({
         className="w-full h-full rounded-lg flex items-center gap-[8px] p-[1px] transition-all"
         style={{
           transformOrigin: "right center",
-          transition: "all 1000ms cubic-bezier(0.22, 1, 0.36, 1)",
+          transition: "all 280ms cubic-bezier(0.34, 1.56, 0.64, 1)",
           transform: menuOpen ? "scaleX(1) scaleY(1) translateX(0)" : "scaleX(0.1) scaleY(0.6) translateX(40px)",
           opacity: menuOpen ? 1 : 0,
+          /* boxShadow & border are replicated via Tailwind classes below using className */
         }}
       >
         <div className="absolute inset-0 rounded-lg pointer-events-none -z-10"></div>
@@ -213,6 +214,7 @@ export default function ControlsBar({
             padding: 0,
           }}
         >
+          {/* Actual background wrapper with theme-aware Tailwind classes */}
           <div
             className="w-full h-full rounded-lg flex items-center gap-[8px] p-[8px] bg-white border border-gray-200 shadow-[0_12px_28px_rgba(0,0,0,0.06)] dark:bg-[#0F1419] dark:border-white/6 dark:shadow-[0_12px_28px_rgba(0,0,0,0.55)]"
             style={{
@@ -232,7 +234,7 @@ export default function ControlsBar({
                   alignItems: "center",
                   justifyContent: "center",
                   cursor: "pointer",
-                  transition: "all 450ms cubic-bezier(0.22, 1, 0.36, 1)",
+                  transition: "all 280ms cubic-bezier(0.34, 1.56, 0.64, 1)",
                   transitionDelay: menuOpen ? "50ms" : "0ms",
                   transform: menuOpen ? "scale(1) rotate(0deg)" : "scale(0) rotate(-180deg)",
                   opacity: menuOpen ? 1 : 0,
@@ -260,8 +262,8 @@ export default function ControlsBar({
                   alignItems: "center",
                   justifyContent: "center",
                   cursor: "pointer",
-                  transition: "all 450ms cubic-bezier(0.22, 1, 0.36, 1)",
-                  transitionDelay: menuOpen ? "120ms" : "0ms",
+                  transition: "all 280ms cubic-bezier(0.34, 1.56, 0.64, 1)",
+                  transitionDelay: menuOpen ? "100ms" : "0ms",
                   transform: menuOpen ? "scale(1) rotate(0deg)" : "scale(0) rotate(-180deg)",
                   opacity: menuOpen ? 1 : 0,
                 }}
