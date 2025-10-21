@@ -167,28 +167,12 @@ export default function ControlsBar({
     };
   }, [menuOpen, isAnimating, computePortalPos]);
 
-  // Close on outside click
-  useEffect(() => {
-    if (!menuOpen) return;
-    
-    const onDocClick = (e) => {
-      const portalEl = document.querySelector(".cb-horizontal-portal");
-      const btn = moreBtnRef.current;
-      if (portalEl && !portalEl.contains(e.target) && btn && !btn.contains(e.target)) {
-        setMenuOpen(false);
-      }
-    };
-    
-    window.addEventListener("click", onDocClick);
-    return () => window.removeEventListener("click", onDocClick);
-  }, [menuOpen]);
-
   // Handle animation state
   useEffect(() => {
     if (menuOpen) {
       setIsAnimating(true);
     } else if (isAnimating) {
-      const timer = setTimeout(() => setIsAnimating(false), 300);
+      const timer = setTimeout(() => setIsAnimating(false), 600);
       return () => clearTimeout(timer);
     }
   }, [menuOpen, isAnimating]);
@@ -213,77 +197,84 @@ export default function ControlsBar({
       onClick={(e) => e.stopPropagation()}
     >
       <div
+        className="w-full h-full rounded-lg flex items-center gap-[8px] p-[1px] transition-all"
         style={{
-          width: "100%",
-          height: "100%",
-          borderRadius: 12,
-          background: "rgba(15,20,25,1)",
-          border: "1px solid rgba(255,255,255,0.06)",
-          boxShadow: "0 12px 28px rgba(0,0,0,0.55)",
-          display: "flex",
-          alignItems: "center",
-          gap: MENU_CONFIG.iconGap,
-          padding: MENU_CONFIG.padding,
           transformOrigin: "right center",
-          transition: "all 280ms cubic-bezier(0.34, 1.56, 0.64, 1)",
+          transition: "all 1000ms cubic-bezier(0.22, 1, 0.36, 1)",
           transform: menuOpen ? "scaleX(1) scaleY(1) translateX(0)" : "scaleX(0.1) scaleY(0.6) translateX(40px)",
           opacity: menuOpen ? 1 : 0,
         }}
       >
-        {/* Chat Button */}
-        <div style={{ position: "relative" }}>
-          <button
-            onClick={onToggleChat}
-            style={{
-              width: MENU_CONFIG.iconSize,
-              height: MENU_CONFIG.iconSize,
-              background: "#1A1F2E",
-              borderRadius: "50%",
-              border: "none",
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              cursor: "pointer",
-              transition: "all 280ms cubic-bezier(0.34, 1.56, 0.64, 1)",
-              transitionDelay: menuOpen ? "50ms" : "0ms",
-              transform: menuOpen ? "scale(1) rotate(0deg)" : "scale(0) rotate(-180deg)",
-              opacity: menuOpen ? 1 : 0,
-            }}
-            aria-label="Open chat"
-          >
-            <div style={{ width: 24, height: 24, color: "white" }}>
-              {icons.messageSquare}
-            </div>
-          </button>
-          {showChatRing && <NotificationRing />}
-        </div>
+        <div className="absolute inset-0 rounded-lg pointer-events-none -z-10"></div>
 
-        {/* Participants Button */}
-        <div style={{ position: "relative" }}>
-          <button
-            onClick={onToggleParticipants}
+        <div
+          className="flex items-center gap-[8px] w-full h-full rounded-lg"
+          style={{
+            padding: 0,
+          }}
+        >
+          <div
+            className="w-full h-full rounded-lg flex items-center gap-[8px] p-[8px] bg-white border border-gray-200 shadow-[0_12px_28px_rgba(0,0,0,0.06)] dark:bg-[#0F1419] dark:border-white/6 dark:shadow-[0_12px_28px_rgba(0,0,0,0.55)]"
             style={{
-              width: MENU_CONFIG.iconSize,
-              height: MENU_CONFIG.iconSize,
-              background: "#1A1F2E",
-              borderRadius: "50%",
-              border: "none",
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              cursor: "pointer",
-              transition: "all 280ms cubic-bezier(0.34, 1.56, 0.64, 1)",
-              transitionDelay: menuOpen ? "100ms" : "0ms",
-              transform: menuOpen ? "scale(1) rotate(0deg)" : "scale(0) rotate(-180deg)",
-              opacity: menuOpen ? 1 : 0,
+              transformOrigin: "right center"
             }}
-            aria-label="Open participants"
           >
-            <div style={{ width: 24, height: 24, color: "white" }}>
-              {icons.users}
+            {/* Chat Button */}
+            <div style={{ position: "relative" }}>
+              <button
+                onClick={onToggleChat}
+                style={{
+                  width: MENU_CONFIG.iconSize,
+                  height: MENU_CONFIG.iconSize,
+                  borderRadius: "50%",
+                  border: "none",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  cursor: "pointer",
+                  transition: "all 450ms cubic-bezier(0.22, 1, 0.36, 1)",
+                  transitionDelay: menuOpen ? "50ms" : "0ms",
+                  transform: menuOpen ? "scale(1) rotate(0deg)" : "scale(0) rotate(-180deg)",
+                  opacity: menuOpen ? 1 : 0,
+                }}
+                aria-label="Open chat"
+                className="bg-white dark:bg-[#1A1F2E] border-none"
+              >
+                <div className="w-6 h-6 text-gray-700 dark:text-white">
+                  {icons.messageSquare}
+                </div>
+              </button>
+              {showChatRing && <NotificationRing />}
             </div>
-          </button>
-          {showPartRing && <NotificationRing />}
+
+            {/* Participants Button */}
+            <div style={{ position: "relative" }}>
+              <button
+                onClick={onToggleParticipants}
+                style={{
+                  width: MENU_CONFIG.iconSize,
+                  height: MENU_CONFIG.iconSize,
+                  borderRadius: "50%",
+                  border: "none",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  cursor: "pointer",
+                  transition: "all 450ms cubic-bezier(0.22, 1, 0.36, 1)",
+                  transitionDelay: menuOpen ? "120ms" : "0ms",
+                  transform: menuOpen ? "scale(1) rotate(0deg)" : "scale(0) rotate(-180deg)",
+                  opacity: menuOpen ? 1 : 0,
+                }}
+                aria-label="Open participants"
+                className="bg-white dark:bg-[#1A1F2E] border-none"
+              >
+                <div className="w-6 h-6 text-gray-700 dark:text-white">
+                  {icons.users}
+                </div>
+              </button>
+              {showPartRing && <NotificationRing />}
+            </div>
+          </div>
         </div>
       </div>
     </div>,
