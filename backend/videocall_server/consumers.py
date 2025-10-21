@@ -235,7 +235,7 @@ class VideoRoomConsumer(AsyncJsonWebsocketConsumer):
 
                 return
 
-            else:  # deny
+            else:
                 await self._remove_pending(safe_id, target)
                 try:
                     await self.channel_layer.send(target, {
@@ -351,6 +351,28 @@ class VideoRoomConsumer(AsyncJsonWebsocketConsumer):
                 except Exception as e:
                     print(f"Error sending endcall: {e}")
             return
+        
+
+        if typeof == "kick-user":
+            meeting_id_raw = content.get("meetingId") or getattr(self, "safe_room_id", None)
+            target = content.get("socketId")
+            reason = content.get("reason", None)
+
+            safe_id = sanitize_room_id(meeting_id_raw)
+            owner_channel = await self._get_owner(safe_id)
+
+            try:
+                await self.channel_layer.send(target, {
+                    "type": "peer.relay",
+                    "payload": {"typeof": "you-were-kicked", "message": "You have been kicked by the host.", "reason": reason}
+                })
+            except Exception as e:
+                print(f"Error sending kick notification to {target}: {e}")
+
+            return
+
+
+
 
     async def group_message(self, event):
         payload = event.get("payload", {})

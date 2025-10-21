@@ -203,7 +203,6 @@ export default function ControlsBar({
           transition: "all 280ms cubic-bezier(0.34, 1.56, 0.64, 1)",
           transform: menuOpen ? "scaleX(1) scaleY(1) translateX(0)" : "scaleX(0.1) scaleY(0.6) translateX(40px)",
           opacity: menuOpen ? 1 : 0,
-          /* boxShadow & border are replicated via Tailwind classes below using className */
         }}
       >
         <div className="absolute inset-0 rounded-lg pointer-events-none -z-10"></div>
@@ -214,7 +213,6 @@ export default function ControlsBar({
             padding: 0,
           }}
         >
-          {/* Actual background wrapper with theme-aware Tailwind classes */}
           <div
             className="w-full h-full rounded-lg flex items-center gap-[8px] p-[8px] bg-white border border-gray-200 shadow-[0_12px_28px_rgba(0,0,0,0.06)] dark:bg-[#0F1419] dark:border-white/6 dark:shadow-[0_12px_28px_rgba(0,0,0,0.55)]"
             style={{
@@ -240,7 +238,7 @@ export default function ControlsBar({
                   opacity: menuOpen ? 1 : 0,
                 }}
                 aria-label="Open chat"
-                className="bg-white dark:bg-[#1A1F2E] border-none"
+                className={btnNormal}
               >
                 <div className="w-6 h-6 text-gray-700 dark:text-white">
                   {icons.messageSquare}
@@ -268,7 +266,7 @@ export default function ControlsBar({
                   opacity: menuOpen ? 1 : 0,
                 }}
                 aria-label="Open participants"
-                className="bg-white dark:bg-[#1A1F2E] border-none"
+                className={btnNormal}
               >
                 <div className="w-6 h-6 text-gray-700 dark:text-white">
                   {icons.users}

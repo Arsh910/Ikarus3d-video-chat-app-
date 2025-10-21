@@ -241,6 +241,22 @@ export default function SimpleMeeting() {
           sendRaw({ typeof: "ready-for-offers", meetingId });
           break;
 
+        case "join-denied":
+          const reason = (data.reason || data.message || "The host denied your request to join." ) + " You will be redirected back to lobby";
+          try { stopAll(); } catch (e) {}
+          setJoinPending(false);
+
+          toast.warn(reason, {
+            position: "top-center",
+            autoClose: 3000,
+            theme: "dark",
+          });
+
+          setTimeout(() => {
+            try { navigate("/"); } catch (e) {}
+          }, 3500);
+          break;
+
         case "join-request":
           console.log("Host received join-request:", data);
           setPendingRequests(prev => {
@@ -368,7 +384,6 @@ export default function SimpleMeeting() {
           break;
 
         case "you-were-kicked":
-          alert("You have been kicked from the meeting by the host.");
           stopAll();
           navigate("/");
           break;
