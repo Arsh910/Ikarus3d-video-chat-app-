@@ -9,6 +9,27 @@ const icons = {
       <line x1="12" y1="19" x2="12" y2="23"></line>
     </svg>
   ),
+  micOff: (
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <line x1="1" y1="1" x2="23" y2="23"></line>
+      <path d="M9 9v3a3 3 0 0 0 5.12 2.12M15 9.34V4a3 3 0 0 0-5.94-.6"></path>
+      <path d="M17 16.95A7 7 0 0 1 5 12v-2m14 0v2a7 7 0 0 1-.11 1.23"></path>
+      <line x1="12" y1="19" x2="12" y2="23"></line>
+    </svg>
+  ),
+  video: (
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <polygon points="23 7 16 12 23 17 23 7"></polygon>
+      <rect x="1" y="5" width="15" height="14" rx="2" ry="2"></rect>
+    </svg>
+  ),
+  videoOff: (
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <line x1="1" y1="1" x2="23" y2="23"></line>
+      <path d="M16 16v1a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V7a2 2 0 0 1 2-2h2l10 10z"></path>
+      <path d="M23 7v10"></path><path d="M16 12l7 5"></path><path d="M16 12l7-5"></path>
+    </svg>
+  ),
   messageSquare: (
     <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
       <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
@@ -292,10 +313,10 @@ export default function ControlsBar({
         {/* Left Controls */}
         <div className="flex gap-4">
           <button onClick={onToggleMute} className={muted ? btnDanger : btnNormal} aria-label={muted ? "Unmute" : "Mute"}>
-            {icons.mic}
+            {muted ? icons.micOff : icons.mic}
           </button>
           <button onClick={onToggleCam} className={camOff ? btnDanger : btnNormal} aria-label={camOff ? "Start video" : "Stop video"}>
-            {icons.screenShare}
+            {camOff ? icons.videoOff : icons.video}
           </button>
           <button onClick={onToggleScreenShare} className={sharing ? btnActive : btnNormal} aria-label={sharing ? "Stop sharing" : "Share screen"}>
             {icons.screenShare}
